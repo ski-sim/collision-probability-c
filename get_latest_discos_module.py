@@ -123,12 +123,3 @@ def convert_to_csv(current_time, dimension_txt_file_path):
             if 'name' in value and value['name'] is not None:
                 value['name'] = value['name'].replace(',', '.')  # 'name' 필드의 쉼표를 마침표로 변경   
             writer.writerow(value)
-
-if __name__ == '__main__':
-    path = create_dimension_txt()        
-    convert_to_csv(path)
-
-
-
-        
-        
