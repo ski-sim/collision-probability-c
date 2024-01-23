@@ -6,14 +6,16 @@ double calculate_pc_max(double dca, double hbr){//calculate_pc_max
     double pc_max = exp(-pow(dca, 2) / (2 * pow(sd_max, 2))) * (1 - exp(-AR * pow(hbr, 2) / (2 * pow(sd_max, 2))));// reference : L.Chen.Orbital Data Applications for Space Object, Springer, China, p215
     return pc_max;
 }
-bool is_value_in_any_interval(std::vector<SatnoInterval> intervals, int value) {
-    for (SatnoInterval interval : intervals) {
-        if (interval.is_in_interval(value)) {
-            return true;
+
+bool is_satno_in_any_interval(const std::vector<Interval>& intervals,int value) {
+    for (const auto& interval : intervals) {
+        if (value >= interval.first && value <= interval.second) {
+            return true; // 어떤 구간에라도 속하면 true 반환
         }
     }
-    return false;
+    return false; // 어떤 구간에도 속하지 않으면 false 반환
 }
+
 /*
 INPUT : 
 1. dimension csv 파일
@@ -22,7 +24,7 @@ INPUT :
 OUTPUT : 
 total_sat_dimension (type = unordered_map) :   {key : satno (type=string), value : single_sat_dimension (type=DimensionMap)}
 */
-unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file_path, const vector<SatnoInterval>& intervals) {
+unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file_path, const vector<Interval>& intervals) {
     
     ifstream file(dimension_file_path);
 
@@ -62,7 +64,7 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
         current_satno = stoi(row[column_names["satno"]]);
 
         
-        if (is_value_in_any_interval(intervals, current_satno)) {
+        if (is_satno_in_any_interval(intervals, current_satno)) {
             single_sat_dimension.set_shape(row[column_names["shape"]]);
             single_sat_dimension.set_span(row[column_names["span"]]);
             single_sat_dimension.set_diameter(row[column_names["diameter"]]);
@@ -90,14 +92,7 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
 3) 자세한 내용은 워드파일로 정리되어있음.
 */
 
-bool is_satno_in_any_interval(std::vector<SatnoInterval> intervals, int value) {
-    for (SatnoInterval interval : intervals) {
-        if (interval.is_in_interval(value)) {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 double calculate_radius(DimensionMap single_sat_dimension) {
     double radius = 0;
@@ -127,7 +122,9 @@ double calculate_radius(DimensionMap single_sat_dimension) {
             break;
 
         case BOX_1_PAN: case BOX_2_PAN: case BOX_3_PAN: case BOX_4_PAN: case BOX_2_ANT: \
-        case BOX_2_PAN_1_DISH: case BOX_2_PAN_1_ANT: case HEX_CYL_2_PAN_1_DISH: case BOX_1_PAN_1_ANT:
+        case BOX_2_PAN_1_DISH: case BOX_2_PAN_1_ANT: case HEX_CYL_2_PAN_1_DISH: case BOX_1_PAN_1_ANT:\
+        case CYL_2_PAN: case CYL_4_PAN: case HEX_CYL_1_PAN: case HEX_CYL_2_PAN: case HEX_CYL_3_PAN: case HALF_HEX_CYL_2_PAN:\
+        case TRAP_CYL_2_PAN: case BOX_1_SAIL: case HALF_CONE_1_ROD:
             if (dimension.check_span_height()) {
                 double height = dimension.get_height();
                 double span = dimension.get_span();
@@ -185,19 +182,17 @@ double calculate_radius(DimensionMap single_sat_dimension) {
             }
             break;
 
-        case CYL_2_PAN: case CYL_4_PAN: case HEX_CYL_1_PAN: case HEX_CYL_2_PAN: case HEX_CYL_3_PAN: case HALF_HEX_CYL_2_PAN:
-        case TRAP_CYL_2_PAN: case BOX_1_SAIL:
-            if (dimension.check_span_height()) {
-                double height = dimension.get_height();
+        case CYL_1_ANT:
+            if (dimension.check_diameter_span()){
                 double span = dimension.get_span();
-                radius = sqrt(pow(span, 2) + pow(height, 2)) / 2;
+                double diameter = dimension.get_diameter();
+                radius = sqrt(pow(diameter, 2) + pow(span, 2)) / 2;
             }else { 
                 radius = 1; 
             }
             break;
 
-
-        case BOX_1_ANT: case BOX_1_ROD: case CYL_1_ANT:
+        case BOX_1_ANT: case BOX_1_ROD: 
             if (dimension.check_depth_width_span()) {
                 double width = dimension.get_width();
                 double depth = dimension.get_depth();

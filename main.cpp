@@ -10,21 +10,17 @@ OUTPUT :
 */
 int main() {
     string dimension_file_path = "./dimension/dimension.csv";
+    vector<Interval> intervals = { {1, 40000}, {40000,50000} };
 
-    std::vector<SatnoInterval> intervals = {
-        SatnoInterval(1, 55000), 
-        SatnoInterval(100, 200)
-    };
     unordered_map<int, DimensionMap> total_sat_dimension = make_dimension_map(dimension_file_path, intervals);
-    // int primary_satno = 54728;
-    // int primary_satno = 55728;
+
     int primary_satno = 44713;
     int secondary_satno = 47647;
     double dca = 528.414 / 1000;
     double primary_radius;
     double secondary_radius;
 
-    if (!is_value_in_any_interval(intervals, primary_satno) || !is_value_in_any_interval(intervals, secondary_satno)) {
+    if (!is_satno_in_any_interval(intervals, primary_satno) || !is_satno_in_any_interval(intervals, secondary_satno)) {
         cerr << "Error: satno is not within any interval." << endl;
         return 0;
     }
@@ -42,3 +38,4 @@ int main() {
     return 0;
 
 }
+
