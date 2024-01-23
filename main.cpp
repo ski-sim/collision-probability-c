@@ -10,7 +10,7 @@ OUTPUT :
 */
 int main() {
     string dimension_file_path = "./dimension/dimension.csv";
-    vector<Interval> intervals = { {1, 40000}, {40000,50000} };
+    vector<Interval> intervals = { {1, 30000}, {40000,50000} };
 
     unordered_map<int, DimensionMap> total_sat_dimension = make_dimension_map(dimension_file_path, intervals);
 
@@ -29,9 +29,9 @@ int main() {
     secondary_radius = calculate_radius(total_sat_dimension[secondary_satno]);
     double hbr = primary_radius + secondary_radius;
     double pc_max = calculate_pc_max(dca, hbr);
-    cout << primary_radius << endl;
-    cout << secondary_radius << endl;
-    cout << pc_max << endl;
+    cout << "primary radius : "<<primary_radius << endl;
+    cout << "secondary radius : "<<secondary_radius << endl;
+    cout << "maximum collision probability : "<<pc_max << endl;
         
    
     

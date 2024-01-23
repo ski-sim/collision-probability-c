@@ -1,32 +1,36 @@
 #include "maximum_collision_probability.h"
 
-double calculate_pc_max(double dca, double hbr){//calculate_pc_max
-    const double AR = 3.0;  //reference : Alfano, S., “Relating Position Uncertainty to Maximum Conjunction Probability,
+/*
+INPUT : dca (distance at close approach), hbr (hard-body radius)
+OUPUT : pc_max (maximum collsiion probability)
+*/
+double calculate_pc_max(double dca, double hbr){
+    const double ar = 3.0;  //reference : Alfano, S., “Relating Position Uncertainty to Maximum Conjunction Probability,
     double sd_max = dca / sqrt(2); //reference : Berend, N., "Estimation of the Probability of Collision Between Two Catalogued Orbiting Objects, " Advances in Space Research,
-    double pc_max = exp(-pow(dca, 2) / (2 * pow(sd_max, 2))) * (1 - exp(-AR * pow(hbr, 2) / (2 * pow(sd_max, 2))));// reference : L.Chen.Orbital Data Applications for Space Object, Springer, China, p215
+    double pc_max = exp(-pow(dca, 2) / (2 * pow(sd_max, 2))) * (1 - exp(-ar * pow(hbr, 2) / (2 * pow(sd_max, 2))));// reference : L.Chen.Orbital Data Applications for Space Object, Springer, China, p215
     return pc_max;
 }
 
-bool is_satno_in_any_interval(const std::vector<Interval>& intervals,int value) {
+/*
+INPUT : interval vector, satno
+OUPUT : true or false
+*/
+bool is_satno_in_any_interval(const std::vector<Interval>& intervals,int satno) {
     for (const auto& interval : intervals) {
-        if (value >= interval.first && value <= interval.second) {
-            return true; // 어떤 구간에라도 속하면 true 반환
+        if (satno >= interval.first && satno <= interval.second) {
+            return true; 
         }
     }
-    return false; // 어떤 구간에도 속하지 않으면 false 반환
+    return false;
 }
 
 /*
-INPUT : 
-1. dimension csv 파일
-2. start Satno
-3. end Satno
-OUTPUT : 
-total_sat_dimension (type = unordered_map) :   {key : satno (type=string), value : single_sat_dimension (type=DimensionMap)}
+INPUT : dimension csv파일,  interval vector,
+OUPUT : total_sat_dimension (type = unordered_map, key = satno, value = single_sat_dimension (type=DimensionMap)}
 */
-unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file_path, const vector<Interval>& intervals) {
+unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_csv_file_path, const vector<Interval>& intervals) {
     
-    ifstream file(dimension_file_path);
+    ifstream file(dimension_csv_file_path);
 
     if (!file.is_open()) {
         cerr << "Failed to open the file." << endl;
@@ -34,10 +38,10 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
     }
 
     string line;
-    unordered_map<string, int> column_names; // 열 이름과 인덱스 매핑
+    unordered_map<string, int> column_names; 
     int column_index = 0;
 
-    // 첫 번째 줄을 먼저 처리합니다.
+    // 첫 번째 줄의 열이름을 먼저 읽음
     if (getline(file, line)) {
         stringstream ss_line(line);
         string element;
@@ -50,7 +54,7 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
     int current_satno = 0;
     unordered_map<int, DimensionMap> total_sat_dimension;
     
-    // 이제 파일의 나머지 줄을 처리합니다.
+    // 두번째 줄 부터 시작
     while (getline(file, line)) {
         stringstream ss_line(line);
         string element;
@@ -62,8 +66,7 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
         }
 
         current_satno = stoi(row[column_names["satno"]]);
-
-        
+   
         if (is_satno_in_any_interval(intervals, current_satno)) {
             single_sat_dimension.set_shape(row[column_names["shape"]]);
             single_sat_dimension.set_span(row[column_names["span"]]);
@@ -82,18 +85,18 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_file
 };
 
 /*
-1. Nasa hbr 계산식 (참고 : Hejduk.Johnson, Evaluating Probability of Collision Uncertainty,p28)
+1. Nasa HBR 계산식 (참고 : Hejduk.Johnson, Evaluating Probability of Collision Uncertainty,p28)
 1) Cyl + 2 Pan의 경우에 대해 radius를 계산하는 방법을 소개함.
-2) object의 dimension을 모두 포함할 수 있는 직사각형의 대각선을 반지름으로 설정함.
+2) 총 3가지 방법론을 제시하였음. 그중 2번째 방법론 사용
 
-2. CalculateRadius function
-1) Cyl + 2 Pan 포함 총 30가지 shape에 대해 계산식을 분류해서 적용함.
-2) object의 dimension을 모두 포함할 수 있는 직사각형의 대각선을 반지름으로 설정함.
+2. calculate_radius function
+1) 총 30가지 shape에 대해 계산식을 달리 적용함.
+2) object의 횡방향, 종방향 dimension을 포함하는 직사각형의 대각선을 반지름으로 설정함.
 3) 자세한 내용은 워드파일로 정리되어있음.
+
+INPUT : DimensionMap
+OUPUT : radius of single object
 */
-
-
-
 double calculate_radius(DimensionMap single_sat_dimension) {
     double radius = 0;
     DimensionMap dimension = single_sat_dimension;
@@ -211,6 +214,10 @@ double calculate_radius(DimensionMap single_sat_dimension) {
     return radius;
 }
 
+/*
+INPUT : line (type = string)
+OUPUT : line (type = vector)
+*/
 vector<string> convert_line_to_vector(const string &unsplitted_line, char delimiter) {
     vector<string> vector_line;
     string element;
@@ -221,6 +228,10 @@ vector<string> convert_line_to_vector(const string &unsplitted_line, char delimi
     return vector_line;
 }
 
+/*
+INPUT : line (type = vector)
+OUPUT : line (type = string)
+*/
 string convert_vector_to_string(const vector<string> &elements, char delimiter) {
     ostringstream joined_element;
     for (size_t i = 0; i < elements.size(); ++i) {

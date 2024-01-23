@@ -15,10 +15,7 @@ using namespace std;
 #include <iostream>
 #include <utility>
 #include "dimension_map.h"
-// 구간을 나타내는 Pair
 typedef pair<int, int> Interval;
-bool is_satno_in_any_interval( const std::vector<Interval>& intervals, int value) ;
-
 enum ShapeType {
         UNKNOWN,
         CYL,
@@ -52,7 +49,6 @@ enum ShapeType {
         CYL_1_ANT,
         HALF_CONE_1_ROD
     };
-
 const map<string, ShapeType> ShapeMap = {
         {"Unknown", UNKNOWN},//1
         {"Cyl", CYL},
@@ -92,3 +88,4 @@ double calculate_radius(const DimensionMap dimension);
 double calculate_pc_max(double dca, double hbr);
 string convert_vector_to_string(const vector<string> &elements, char delimiter);
 vector<string> convert_line_to_vector(const string &unsplitted_line, char delimiter) ;
+bool is_satno_in_any_interval( const std::vector<Interval>& intervals, int value) ;
