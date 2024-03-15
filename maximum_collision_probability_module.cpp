@@ -4,7 +4,7 @@
 INPUT : dca (distance at close approach), hbr (hard-body radius)
 OUPUT : pc_max (maximum collsiion probability)
 */
-double calculate_pc_max(double dca, double hbr){
+double calculate_pc_max(const double& dca, const double& hbr){
     const double ar = 3.0;  //reference : Alfano, S., “Relating Position Uncertainty to Maximum Conjunction Probability,
     double sd_max = dca / sqrt(2); //reference : Berend, N., "Estimation of the Probability of Collision Between Two Catalogued Orbiting Objects, " Advances in Space Research,
     double pc_max = exp(-pow(dca, 2) / (2 * pow(sd_max, 2))) * (1 - exp(-ar * pow(hbr, 2) / (2 * pow(sd_max, 2))));// reference : L.Chen.Orbital Data Applications for Space Object, Springer, China, p215
@@ -15,7 +15,7 @@ double calculate_pc_max(double dca, double hbr){
 INPUT : interval vector, satno
 OUPUT : true or false
 */
-bool is_satno_in_any_interval(const std::vector<Interval>& intervals,int satno) {
+bool is_satno_in_any_interval(const std::vector<Interval>& intervals,const int& satno) {
     for (const auto& interval : intervals) {
         if (satno >= interval.first && satno <= interval.second) {
             return true; 
@@ -26,7 +26,7 @@ bool is_satno_in_any_interval(const std::vector<Interval>& intervals,int satno) 
 
 /*
 INPUT : dimension csv파일,  interval vector,
-OUPUT : total_sat_dimension (type = unordered_map, key = satno, value = single_sat_dimension (type=DimensionMap)}
+OUPUT : map_from_satno_to_dimensions (type = unordered_map, key = satno, value = single_sat_dimension_map (type=DimensionMap)}
 */
 unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_csv_file_path, const vector<Interval>& intervals) {
     
@@ -52,7 +52,7 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_csv_
     }
     
     int current_satno = 0;
-    unordered_map<int, DimensionMap> total_sat_dimension;
+    unordered_map<int, DimensionMap> map_from_satno_to_dimensions;
     
     // 두번째 줄 부터 시작
     while (getline(file, line)) {
@@ -75,13 +75,13 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_csv_
             single_sat_dimension.set_width(row[column_names["width"]]);
             single_sat_dimension.set_depth(row[column_names["depth"]]);
 
-            total_sat_dimension[current_satno] = single_sat_dimension;
+            map_from_satno_to_dimensions[current_satno] = single_sat_dimension;
         }
 
     }
     file.close();
 
-    return total_sat_dimension;
+    return map_from_satno_to_dimensions;
 };
 
 /*
@@ -97,13 +97,13 @@ unordered_map<int, DimensionMap> make_dimension_map(const string& dimension_csv_
 INPUT : DimensionMap
 OUPUT : radius of single object
 */
-double calculate_radius(DimensionMap single_sat_dimension) {
+double calculate_radius(const DimensionMap& single_sat_dimension) {
     double radius = 0;
     DimensionMap dimension = single_sat_dimension;
 
     ShapeType shape;
-    auto shape_it = ShapeMap.find(dimension.get_shape());
-    if (shape_it != ShapeMap.end()) {
+    auto shape_it = map_from_string_to_shape_map.find(dimension.get_shape());
+    if (shape_it != map_from_string_to_shape_map.end()) {
         shape = shape_it->second; 
     }
     else{
